@@ -1,4 +1,4 @@
-package com.dataserver.dataserver;
+package com.dataserver;
 
 public class Produto {
 

@@ -3,6 +3,7 @@ package com.dataserver.dataserver;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
+import com.dataserver.Produto;
 
 @RestController
 public class ProdutoController {
