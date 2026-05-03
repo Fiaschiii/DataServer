@@ -17,41 +17,79 @@ function App() {
       .finally(() => setLoading(false))
   }, [])
 
-  if (loading) return <h2>Carregando...</h2>
+  if (loading) return (
+    <div className="loading">
+      <div className="spinner"></div>
+      <p>Carregando dados...</p>
+    </div>
+  )
 
   return (
-    <div style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
-      <h1>DataServer</h1>
+    <div className="app">
+      <header className="header">
+        <div className="header-inner">
+          <div className="logo">
+            <span className="logo-icon">⬡</span>
+            <span className="logo-text">DataServer</span>
+          </div>
+          <span className="badge">v1.0</span>
+        </div>
+      </header>
 
-      <h2>Produtos</h2>
-      <table border="1" cellPadding="8">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Nome</th>
-            <th>Preço</th>
-          </tr>
-        </thead>
-        <tbody>
-          {produtos.map(p => (
-            <tr key={p.id}>
-              <td>{p.id}</td>
-              <td>{p.nome}</td>
-              <td>R$ {p.preco.toFixed(2)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <main className="main">
+        {relatorio && (
+          <section className="metrics">
+            <div className="metric-card">
+              <p className="metric-label">Total de Produtos</p>
+              <p className="metric-value">{relatorio.total_produtos}</p>
+            </div>
+            <div className="metric-card">
+              <p className="metric-label">Preço Total</p>
+              <p className="metric-value">R$ {relatorio.preco_total.toFixed(2)}</p>
+            </div>
+            <div className="metric-card">
+              <p className="metric-label">Preço Médio</p>
+              <p className="metric-value">R$ {relatorio.preco_medio.toFixed(2)}</p>
+            </div>
+            <div className="metric-card highlight">
+              <p className="metric-label">Produto Mais Caro</p>
+              <p className="metric-value">{relatorio.produto_mais_caro.nome}</p>
+            </div>
+          </section>
+        )}
 
-      {relatorio && (
-        <>
-          <h2>Relatório (Python)</h2>
-          <p>Total de produtos: {relatorio.total_produtos}</p>
-          <p>Preço total: R$ {relatorio.preco_total.toFixed(2)}</p>
-          <p>Preço médio: R$ {relatorio.preco_medio.toFixed(2)}</p>
-          <p>Produto mais caro: {relatorio.produto_mais_caro.nome}</p>
-        </>
-      )}
+        <section className="table-section">
+          <div className="table-header">
+            <h2>Produtos</h2>
+            <span className="tag">Java API</span>
+          </div>
+          <table className="table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nome</th>
+                <th>Preço</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {produtos.map(p => (
+                <tr key={p.id}>
+                  <td>#{p.id}</td>
+                  <td>{p.nome}</td>
+                  <td>R$ {p.preco.toFixed(2)}</td>
+                  <td><span className="status">Ativo</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+
+        <footer className="footer">
+          <span>DataServer 2026</span>
+          <span>Made in Brazil</span>
+        </footer>
+      </main>
     </div>
   )
 }
