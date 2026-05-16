@@ -5,17 +5,24 @@ function App() {
   const [produtos, setProdutos] = useState([])
   const [relatorio, setRelatorio] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(0)
+  const [totalPages, setTotalPages] = useState(0)
 
   useEffect(() => {
-    fetch('http://localhost:8080/produtos')
+    setLoading(true)
+    fetch(`http://localhost:8080/produtos?page=${page}&size=50`)
       .then(res => res.json())
-      .then(data => setProdutos(data))
+      .then(data => {
+        // API paginada retorna { content: [...], totalPages: N }
+        setProdutos(data.content)
+        setTotalPages(data.totalPages)
+      })
 
     fetch('http://localhost:8080/relatorio')
       .then(res => res.json())
       .then(data => setRelatorio(data))
       .finally(() => setLoading(false))
-  }, [])
+  }, [page])
 
   if (loading) return (
     <div className="loading">
@@ -83,6 +90,23 @@ function App() {
               ))}
             </tbody>
           </table>
+
+          {/* Paginação */}
+          <div className="pagination">
+            <button
+              onClick={() => setPage(p => p - 1)}
+              disabled={page === 0}
+            >
+              ← Anterior
+            </button>
+            <span>Página {page + 1} de {totalPages}</span>
+            <button
+              onClick={() => setPage(p => p + 1)}
+              disabled={page >= totalPages - 1}
+            >
+              Próxima →
+            </button>
+          </div>
         </section>
 
         <footer className="footer">

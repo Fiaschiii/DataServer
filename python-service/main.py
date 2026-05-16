@@ -34,13 +34,12 @@ def analisar_produtos():
 
 
     return {
-        "total_produtos": len(produtos),
-        "preco_total": round(total, 2),
-        "preco_medio": round(media, 2),
-        "produto_mais_caro": dict(mais_caro),
-        "produto_mais_barato": dict(mais_barato),
-        "produtos": [dict(p) for p in produtos]
-    }
+    "total_produtos": len(produtos),
+    "preco_total": round(total, 2),
+    "preco_medio": round(media, 2),
+    "produto_mais_caro": dict(mais_caro),
+    "produto_mais_barato": dict(mais_barato)
+}
        
 
 
