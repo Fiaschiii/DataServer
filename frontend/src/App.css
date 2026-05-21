@@ -95,12 +95,14 @@ body {
   transition: border-color 0.2s;
 }
 
+/* Borda azul só no hover — removido do highlight */
 .metric-card:hover {
   border-color: #58a6ff;
 }
 
+/* Highlight sem borda fixa — só destaca com fundo levemente diferente */
 .metric-card.highlight {
-  border-color: #388bfd;
+  background-color: #1c2333;
 }
 
 .metric-label {
@@ -183,10 +185,110 @@ body {
   border: 1px solid #2ea043;
 }
 
+/* Paginação estilizada */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  border-top: 1px solid #21262d;
+}
+
+.pagination button {
+  background-color: #21262d;
+  color: #e6edf3;
+  border: 1px solid #30363d;
+  padding: 0.5rem 1.25rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.pagination button:hover:not(:disabled) {
+  background-color: #1f6feb33;
+  border-color: #58a6ff;
+  color: #58a6ff;
+}
+
+.pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pagination span {
+  font-size: 0.875rem;
+  color: #8b949e;
+  min-width: 120px;
+  text-align: center;
+}
+
 .footer {
   display: flex;
   justify-content: space-between;
   font-size: 0.75rem;
   color: #484f58;
   padding: 1rem 0;
+}
+
+
+
+.form-cadastro {
+  display: flex;
+  gap: 12px;
+  padding: 1.25rem 1.5rem;
+}
+
+.input-field {
+  flex: 1;
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  border: 1px solid #30363d;
+  background-color: #0d1117;
+  color: #e6edf3;
+  font-size: 0.875rem;
+  transition: border-color 0.2s;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: #58a6ff;
+}
+
+.btn-cadastrar {
+  padding: 0.6rem 1.5rem;
+  border-radius: 6px;
+  background-color: #1f6feb;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.btn-cadastrar:hover:not(:disabled) {
+  background-color: #388bfd;
+}
+
+.btn-cadastrar:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-deletar {
+  padding: 0.3rem 0.9rem;
+  border-radius: 6px;
+  background-color: transparent;
+  color: #f85149;
+  border: 1px solid #f8514955;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.btn-deletar:hover {
+  background-color: #f8514922;
+  border-color: #f85149;
 }

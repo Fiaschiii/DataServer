@@ -7,22 +7,47 @@ function App() {
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
+  const [nome, setNome] = useState('')
+  const [preco, setPreco] = useState('')
+  const [salvando, setSalvando] = useState(false)
+
+  const carregarDados = () => {
+    Promise.all([
+      fetch(`http://localhost:8080/produtos?page=${page}&size=50`).then(r => r.json()),
+      fetch('http://localhost:8080/relatorio').then(r => r.json())
+    ]).then(([prod, rel]) => {
+      setProdutos(prod.content)
+      setTotalPages(prod.totalPages)
+      setRelatorio(rel)
+    }).finally(() => setLoading(false))
+  }
 
   useEffect(() => {
     setLoading(true)
-    fetch(`http://localhost:8080/produtos?page=${page}&size=50`)
-      .then(res => res.json())
-      .then(data => {
-        // API paginada retorna { content: [...], totalPages: N }
-        setProdutos(data.content)
-        setTotalPages(data.totalPages)
-      })
-
-    fetch('http://localhost:8080/relatorio')
-      .then(res => res.json())
-      .then(data => setRelatorio(data))
-      .finally(() => setLoading(false))
+    carregarDados()
   }, [page])
+
+  const cadastrarProduto = () => {
+    if (!nome || !preco) return alert('Preencha nome e preço!')
+    setSalvando(true)
+    fetch('http://localhost:8080/produtos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nome, preco: parseFloat(preco) })
+    })
+      .then(() => {
+        setNome('')
+        setPreco('')
+        carregarDados()
+      })
+      .finally(() => setSalvando(false))
+  }
+
+  const deletarProduto = (id) => {
+    if (!confirm('Deseja deletar este produto?')) return
+    fetch(`http://localhost:8080/produtos/${id}`, { method: 'DELETE' })
+      .then(() => carregarDados())
+  }
 
   if (loading) return (
     <div className="loading">
@@ -65,6 +90,37 @@ function App() {
           </section>
         )}
 
+        {/* Formulário de cadastro */}
+        <section className="table-section">
+          <div className="table-header">
+            <h2>Novo Produto</h2>
+          </div>
+          <div className="form-cadastro">
+            <input
+              type="text"
+              placeholder="Nome do produto"
+              value={nome}
+              onChange={e => setNome(e.target.value)}
+              className="input-field"
+            />
+            <input
+              type="number"
+              placeholder="Preço (ex: 199.90)"
+              value={preco}
+              onChange={e => setPreco(e.target.value)}
+              className="input-field"
+            />
+            <button
+              onClick={cadastrarProduto}
+              disabled={salvando}
+              className="btn-cadastrar"
+            >
+              {salvando ? 'Salvando...' : '+ Cadastrar'}
+            </button>
+          </div>
+        </section>
+
+        {/* Tabela de produtos */}
         <section className="table-section">
           <div className="table-header">
             <h2>Produtos</h2>
@@ -77,33 +133,35 @@ function App() {
                 <th>Nome</th>
                 <th>Preço</th>
                 <th>Status</th>
+                <th>Ação</th>
               </tr>
             </thead>
             <tbody>
               {produtos.map(p => (
                 <tr key={p.id}>
-                  <td>#{p.id}</td>
+                  <td>{p.id}</td>
                   <td>{p.nome}</td>
                   <td>R$ {p.preco.toFixed(2)}</td>
                   <td><span className="status">Ativo</span></td>
+                  <td>
+                    <button
+                      className="btn-deletar"
+                      onClick={() => deletarProduto(p.id)}
+                    >
+                      Deletar
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
 
-          {/* Paginação */}
           <div className="pagination">
-            <button
-              onClick={() => setPage(p => p - 1)}
-              disabled={page === 0}
-            >
+            <button onClick={() => setPage(p => p - 1)} disabled={page === 0}>
               ← Anterior
             </button>
             <span>Página {page + 1} de {totalPages}</span>
-            <button
-              onClick={() => setPage(p => p + 1)}
-              disabled={page >= totalPages - 1}
-            >
+            <button onClick={() => setPage(p => p + 1)} disabled={page >= totalPages - 1}>
               Próxima →
             </button>
           </div>
