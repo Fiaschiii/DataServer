@@ -83,7 +83,7 @@ function App() {
               <p className="metric-label">Preço Médio</p>
               <p className="metric-value">R$ {relatorio.preco_medio.toFixed(2)}</p>
             </div>
-            <div className="metric-card highlight">
+            <div className="metric-card">
               <p className="metric-label">Produto Mais Caro</p>
               <p className="metric-value">{relatorio.produto_mais_caro.nome}</p>
             </div>

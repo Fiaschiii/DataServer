@@ -19,8 +19,12 @@ public class ProdutoController {
     @GetMapping
     public Page<Produto> getProdutos(
         @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "50") int size
+        @RequestParam(defaultValue = "50") int size,
+        @RequestParam(defaultValue = "") String busca
     ) {
+        if (busca.isEmpty()) {
+            return produtoRepository.findAll(PageRequest.of(page, size));
+        }            
         return produtoRepository.findAll(PageRequest.of(page, size));
     }
 

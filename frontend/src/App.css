@@ -95,14 +95,9 @@ body {
   transition: border-color 0.2s;
 }
 
-/* Borda azul só no hover — removido do highlight */
+
 .metric-card:hover {
   border-color: #58a6ff;
-}
-
-/* Highlight sem borda fixa — só destaca com fundo levemente diferente */
-.metric-card.highlight {
-  background-color: #1c2333;
 }
 
 .metric-label {
@@ -159,7 +154,7 @@ body {
   text-align: left;
   padding: 0.75rem 1.5rem;
   font-size: 0.75rem;
-  color: #8b949e;
+  color: #ffffff;
   text-transform: uppercase;
   letter-spacing: 0.8px;
   background-color: #0d1117;
@@ -172,8 +167,20 @@ body {
   border-top: 1px solid #21262d;
 }
 
-.table tr:hover td {
-  background-color: #1c2128;
+.table tbody tr {
+  transition: background-color 0.2s, boder-color 0.2s;
+  }
+
+.table tbody tr:hover td {
+  background-color: #1f6feb15;
+  color: #58a6ff;
+  border-top-color: #1f6feb55;
+}
+
+.table tbody tr:hover .status {
+  border-color: #58a6ff;
+  color: #58a6ff;
+  background-color: #1f6feb22;
 }
 
 .status {
@@ -185,7 +192,7 @@ body {
   border: 1px solid #2ea043;
 }
 
-/* Paginação estilizada */
+
 .pagination {
   display: flex;
   align-items: center;
@@ -231,8 +238,6 @@ body {
   color: #484f58;
   padding: 1rem 0;
 }
-
-
 
 .form-cadastro {
   display: flex;
