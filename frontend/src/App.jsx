@@ -10,10 +10,12 @@ function App() {
   const [nome, setNome] = useState('')
   const [preco, setPreco] = useState('')
   const [salvando, setSalvando] = useState(false)
+  const [busca, setBusca] = useState('')
+  const [inputBusca, setInputBusca] = useState('')
 
   const carregarDados = () => {
     Promise.all([
-      fetch(`http://localhost:8080/produtos?page=${page}&size=50`).then(r => r.json()),
+      fetch(`http://localhost:8080/produtos?page=${page}&size=50&busca=${busca}`).then(r => r.json()),
       fetch('http://localhost:8080/relatorio').then(r => r.json())
     ]).then(([prod, rel]) => {
       setProdutos(prod.content)
@@ -26,6 +28,7 @@ function App() {
     setLoading(true)
     carregarDados()
   }, [page])
+
 
   const cadastrarProduto = () => {
     if (!nome || !preco) return alert('Preencha nome e preço!')
@@ -119,6 +122,23 @@ function App() {
             </button>
           </div>
         </section>
+
+        {/* Barra de Pesquisa */}
+        <div className="search-bar">
+          <input
+            type="text"
+            placeholder="Pesquisar produto pelo nome..."
+            value={busca}
+            onChange={e => setBusca(e.target.value)}
+            className="input-field"
+          />
+          <button
+            className="btn-cadastrar"
+            onclick={() => setPage(0)}
+          >
+            Pesquisar
+          </button>
+        </div>
 
         {/* Tabela de produtos */}
         <section className="table-section">
