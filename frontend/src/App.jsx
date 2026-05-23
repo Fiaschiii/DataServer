@@ -13,9 +13,9 @@ function App() {
   const [busca, setBusca] = useState('')
   const [inputBusca, setInputBusca] = useState('')
 
-  const carregarDados = () => {
+  const carregarDados = (paginaAtual = page, buscaAtual = busca) => {
     Promise.all([
-      fetch(`http://localhost:8080/produtos?page=${page}&size=50&busca=${busca}`).then(r => r.json()),
+      fetch(`http://localhost:8080/produtos?page=${paginaAtual}&size=50&busca=${buscaAtual}`).then(r => r.json()),
       fetch('http://localhost:8080/relatorio').then(r => r.json())
     ]).then(([prod, rel]) => {
       setProdutos(prod.content)
@@ -130,11 +130,12 @@ function App() {
             placeholder="Pesquisar produto pelo nome..."
             value={busca}
             onChange={e => setBusca(e.target.value)}
+            onKeyDown={e => {if (e.key === 'Enter') {setPage(0); carregarDados(0, busca) } }}
             className="input-field"
           />
           <button
             className="btn-cadastrar"
-            onclick={() => setPage(0)}
+            onclick={() => { setPage(0); carregarDados(0, busca) }}
           >
             Pesquisar
           </button>
