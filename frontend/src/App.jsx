@@ -135,7 +135,7 @@ function App() {
           />
           <button
             className="btn-cadastrar"
-            onclick={() => { setPage(0); carregarDados(0, busca) }}
+            onClick={() => { setPage(0); carregarDados(0, busca) }}
           >
             Pesquisar
           </button>
