@@ -40,5 +40,5 @@ __pycache__/
 venv/
 
 ### Credenciais ###
-application.properties
+.env
 

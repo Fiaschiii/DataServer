@@ -1,17 +1,25 @@
+import os
+from pathlib import Path
+
+from dotenv import load_dotenv
 from fastapi import FastAPI
 import psycopg2
 import psycopg2.extras
+
+# Carrega as credenciais do .env na raiz do projeto.
+# Variáveis de ambiente do sistema têm prioridade sobre o .env.
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 app = FastAPI()
 
 # Conexão com o Supabase via Session Pooler (IPv4)
 def get_connection():
     return psycopg2.connect(
-        host="aws-1-us-east-1.pooler.supabase.com",
-        port=5432,
-        database="postgres",
-        user="postgres.jegxfffoldxaqmeyllml",
-        password="fiaschi0987"
+        host=os.environ["DB_HOST"],
+        port=int(os.environ.get("DB_PORT", "5432")),
+        database=os.environ.get("DB_NAME", "postgres"),
+        user=os.environ["DB_USER"],
+        password=os.environ["DB_PASSWORD"]
     )
 
 
