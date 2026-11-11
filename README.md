@@ -16,6 +16,12 @@ Sistema full stack de gerenciamento de produtos construído com Java, Python e R
 - Análise estatística via Python
 
 ## Como rodar
+### Configuração (credenciais)
+Copie o `.env.example` para `.env` na raiz do projeto e preencha as credenciais do banco.
+O `.env` é lido pelo Java e pelo Python e **nunca deve ser commitado** (já está no `.gitignore`).
+```bash
+cp .env.example .env
+```
 ### Java
 ```bash
 cd dataserver
