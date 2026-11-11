@@ -8,12 +8,15 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -153,5 +156,103 @@ class ProdutoControllerTests {
 
         verify(produtoRepository, never()).findAll(any(Pageable.class));
         verify(produtoRepository, never()).findByNomeContainingIgnoreCase(anyString(), any());
+    }
+
+    // ---------- GET /produtos/{id} ----------
+
+    @Test
+    void buscaProdutoPorId() throws Exception {
+        when(produtoRepository.findById(5L)).thenReturn(Optional.of(new Produto(5L, "Monitor", 900.0)));
+
+        mockMvc.perform(get("/produtos/5"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(5))
+            .andExpect(jsonPath("$.nome").value("Monitor"));
+    }
+
+    @Test
+    void buscaProdutoInexistenteRetorna404() throws Exception {
+        when(produtoRepository.findById(99L)).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/produtos/99"))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.status").value(404))
+            .andExpect(jsonPath("$.erro").value("Produto 99 não encontrado"));
+    }
+
+    @Test
+    void buscaComIdNaoNumericoRetorna400() throws Exception {
+        mockMvc.perform(get("/produtos/abc"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.campos.id").value("Valor inválido: 'abc'"));
+
+        verifyNoInteractions(produtoRepository);
+    }
+
+    // ---------- PUT /produtos/{id} ----------
+
+    @Test
+    void atualizaProdutoUsandoIdDaUrl() throws Exception {
+        when(produtoRepository.findById(5L)).thenReturn(Optional.of(new Produto(5L, "Monitor", 900.0)));
+        when(produtoRepository.save(any(Produto.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        mockMvc.perform(put("/produtos/5")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"id\":3,\"nome\":\"Monitor 27\",\"preco\":1200.0}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(5))
+            .andExpect(jsonPath("$.nome").value("Monitor 27"))
+            .andExpect(jsonPath("$.preco").value(1200.0));
+
+        ArgumentCaptor<Produto> salvo = ArgumentCaptor.forClass(Produto.class);
+        verify(produtoRepository).save(salvo.capture());
+        assertEquals(5L, salvo.getValue().getId());
+    }
+
+    @Test
+    void atualizaProdutoInexistenteRetorna404() throws Exception {
+        when(produtoRepository.findById(99L)).thenReturn(Optional.empty());
+
+        mockMvc.perform(put("/produtos/99")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"nome\":\"X\",\"preco\":10}"))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.erro").value("Produto 99 não encontrado"));
+
+        verify(produtoRepository, never()).save(any());
+    }
+
+    @Test
+    void atualizaComDadosInvalidosRetorna400() throws Exception {
+        mockMvc.perform(put("/produtos/5")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"nome\":\"X\",\"preco\":-1}"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.campos.preco").value("O preço deve ser maior que zero"));
+
+        verifyNoInteractions(produtoRepository);
+    }
+
+    // ---------- DELETE /produtos/{id} ----------
+
+    @Test
+    void deletaProdutoExistente() throws Exception {
+        when(produtoRepository.existsById(5L)).thenReturn(true);
+
+        mockMvc.perform(delete("/produtos/5"))
+            .andExpect(status().isOk());
+
+        verify(produtoRepository).deleteById(5L);
+    }
+
+    @Test
+    void deletaProdutoInexistenteRetorna404() throws Exception {
+        when(produtoRepository.existsById(99L)).thenReturn(false);
+
+        mockMvc.perform(delete("/produtos/99"))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.erro").value("Produto 99 não encontrado"));
+
+        verify(produtoRepository, never()).deleteById(any());
     }
 }

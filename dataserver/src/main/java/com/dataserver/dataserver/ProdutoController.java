@@ -45,9 +45,30 @@ public class ProdutoController {
         return produtoRepository.save(produto);
     }
 
-    // DELETE /produtos/{id}
+    // GET /produtos/{id} - busca um produto (404 se não existir)
+    @GetMapping("/{id}")
+    public Produto buscarProduto(@PathVariable Long id) {
+        return produtoRepository.findById(id)
+            .orElseThrow(() -> new ProdutoNaoEncontradoException(id));
+    }
+
+    // PUT /produtos/{id} - atualiza nome e preço (mesmas validações do POST; 404 se não existir)
+    @PutMapping("/{id}")
+    public Produto atualizarProduto(@PathVariable Long id, @Valid @RequestBody Produto dados) {
+        // O id vale o da URL; um "id" diferente no corpo é ignorado
+        Produto produto = produtoRepository.findById(id)
+            .orElseThrow(() -> new ProdutoNaoEncontradoException(id));
+        produto.setNome(dados.getNome());
+        produto.setPreco(dados.getPreco());
+        return produtoRepository.save(produto);
+    }
+
+    // DELETE /produtos/{id} - 404 se não existir (o deleteById sozinho ignora id inexistente)
     @DeleteMapping("/{id}")
     public void deletarProduto(@PathVariable Long id) {
+        if (!produtoRepository.existsById(id)) {
+            throw new ProdutoNaoEncontradoException(id);
+        }
         produtoRepository.deleteById(id);
     }
 }

@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-// Converte erros de entrada do cliente em respostas 400 com mensagens claras,
+// Converte erros do cliente em respostas 400/404 com mensagens claras,
 // no formato: {"status": 400, "erro": "...", "campos": {"campo": "mensagem"}}
 @RestControllerAdvice
 public class TratadorDeErros {
@@ -54,9 +54,20 @@ public class TratadorDeErros {
         return resposta("JSON inválido ou malformado", Map.of());
     }
 
+    // GET/PUT/DELETE /produtos/{id} com id que não existe
+    @ExceptionHandler(ProdutoNaoEncontradoException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public Map<String, Object> naoEncontrado(ProdutoNaoEncontradoException ex) {
+        return resposta(HttpStatus.NOT_FOUND, ex.getMessage(), Map.of());
+    }
+
     private Map<String, Object> resposta(String erro, Map<String, String> campos) {
+        return resposta(HttpStatus.BAD_REQUEST, erro, campos);
+    }
+
+    private Map<String, Object> resposta(HttpStatus status, String erro, Map<String, String> campos) {
         Map<String, Object> corpo = new LinkedHashMap<>();
-        corpo.put("status", HttpStatus.BAD_REQUEST.value());
+        corpo.put("status", status.value());
         corpo.put("erro", erro);
         corpo.put("campos", campos);
         return corpo;
