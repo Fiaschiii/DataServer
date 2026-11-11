@@ -1,5 +1,7 @@
 package com.dataserver.dataserver;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -16,6 +18,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.data.domain.PageImpl;
@@ -50,9 +53,26 @@ class ProdutoControllerTests {
             .andExpect(jsonPath("$.nome").value("Teclado"));
     }
 
+    @Test
+    void ignoraIdEnviadoNoCorpoParaNaoSobrescreverProdutoExistente() throws Exception {
+        when(produtoRepository.save(any(Produto.class)))
+            .thenReturn(new Produto(42L, "Teclado", 250.0));
+
+        mockMvc.perform(post("/produtos")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"id\":3,\"nome\":\"Teclado\",\"preco\":250.0}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(42));
+
+        ArgumentCaptor<Produto> salvo = ArgumentCaptor.forClass(Produto.class);
+        verify(produtoRepository).save(salvo.capture());
+        assertNull(salvo.getValue().getId());
+        assertEquals("Teclado", salvo.getValue().getNome());
+    }
+
     @ParameterizedTest(name = "{0}")
     @CsvSource(delimiter = '|', value = {
-        "sem preço            | {\"nome\":\"X\"}                  | preco | O preço é obrigatório",
+        "sem preço          | {\"nome\":\"X\"}                  | preco | O preço é obrigatório",
         "preço negativo       | {\"nome\":\"X\",\"preco\":-5}     | preco | O preço deve ser maior que zero",
         "preço zero           | {\"nome\":\"X\",\"preco\":0}      | preco | O preço deve ser maior que zero",
         "sem nome             | {\"preco\":10}                    | nome  | O nome é obrigatório",

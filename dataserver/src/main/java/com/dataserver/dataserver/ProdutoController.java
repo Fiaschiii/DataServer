@@ -39,6 +39,9 @@ public class ProdutoController {
     // POST /produtos - salva um novo produto (nome obrigatório, preço > 0)
     @PostMapping
     public Produto criarProduto(@Valid @RequestBody Produto produto) {
+        // O POST sempre cria: um "id" enviado no corpo é ignorado, senão o save()
+        // faria merge e sobrescreveria o produto existente com esse id.
+        produto.setId(null);
         return produtoRepository.save(produto);
     }
 
