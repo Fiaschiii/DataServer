@@ -1,7 +1,19 @@
-# Credenciais
+# Regras gerais do repositório.
+# Cada serviço tem também o seu: dataserver/.gitignore (Java) e frontend/.gitignore (Node).
+
+# Credenciais (vale para qualquer pasta)
 .env
 
-# Python
+# Configurações pessoais de editor/IDE
+.vscode/
+.idea/
+*.iml
+
+# Arquivos do sistema operacional
+.DS_Store
+Thumbs.db
+
+# Python (python-service)
 __pycache__/
 *.pyc
 venv/
