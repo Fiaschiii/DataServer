@@ -2,6 +2,10 @@ package com.dataserver.dataserver;
 
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 
 // Entidade JPA - mapeia esta classe para a tabela "produtos" no Supabase
 @Entity
@@ -13,11 +17,15 @@ public class Produto {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Coluna "nome" - não pode ser nula
+    // Coluna "nome" - obrigatória, não pode ser vazia
+    @NotBlank(message = "O nome é obrigatório")
+    @Size(max = 255, message = "O nome deve ter no máximo 255 caracteres")
     @Column(nullable = false)
     private String nome;
 
-    // Coluna "preco" - não pode ser nula
+    // Coluna "preco" - obrigatória e maior que zero
+    @NotNull(message = "O preço é obrigatório")
+    @Positive(message = "O preço deve ser maior que zero")
     @Column(nullable = false)
     private Double preco;
 
