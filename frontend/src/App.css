@@ -168,8 +168,8 @@ body {
 }
 
 .table tbody tr {
-  transition: background-color 0.2s, boder-color 0.2s;
-  }
+  transition: background-color 0.2s, border-color 0.2s;
+}
 
 .table tbody tr:hover td {
   background-color: #1f6feb15;
@@ -309,4 +309,53 @@ body {
   width: 100%;
   padding: 0.75rem 1rem;
   font-size: 1rem;
+}
+
+/* Mensagem de erro (API fora do ar, cadastro recusado, produto já apagado...) */
+.alerta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  border: 1px solid #f8514955;
+  background-color: #f8514915;
+  color: #ffa198;
+  font-size: 0.875rem;
+}
+
+.alerta button {
+  flex-shrink: 0;
+  padding: 0.3rem 0.9rem;
+  border-radius: 6px;
+  background-color: transparent;
+  color: #ffa198;
+  border: 1px solid #f8514955;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.alerta button:hover {
+  border-color: #f85149;
+}
+
+.metric-aviso {
+  margin: -1rem 0 1.5rem;
+  font-size: 0.8rem;
+  color: #d29922;
+}
+
+/* Linha da tabela quando não há produtos */
+.table td.vazio {
+  text-align: center;
+  color: #8b949e;
+  padding: 2rem 1.5rem;
+}
+
+/* Tabela esmaecida enquanto a próxima página/busca carrega */
+.table-section.atualizando .table {
+  opacity: 0.5;
+  transition: opacity 0.2s;
 }
