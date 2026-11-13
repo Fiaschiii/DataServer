@@ -1,42 +1,15 @@
 import { useState, useEffect } from 'react'
-import './App.css'
+import { requisitar } from './api'
 
-// URL da API Java (pode ser trocada com VITE_API_URL no .env do frontend)
-const API = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
 const TAMANHO_PAGINA = 50
-
-// fetch que lança um Error com a mensagem da API quando a resposta não é 2xx
-// (formato da API: {"status": 400, "erro": "...", "campos": {"campo": "mensagem"}})
-async function requisitar(caminho, opcoes) {
-  let resposta
-  try {
-    resposta = await fetch(`${API}${caminho}`, opcoes)
-  } catch {
-    throw new Error('Não foi possível conectar à API. Verifique se o backend está rodando.')
-  }
-
-  const texto = await resposta.text()
-  let corpo = null
-  try {
-    corpo = texto ? JSON.parse(texto) : null
-  } catch {
-    corpo = null
-  }
-
-  if (!resposta.ok) {
-    const titulo = corpo?.erro ?? `Erro ${resposta.status}`
-    const detalhes = corpo?.campos ? Object.values(corpo.campos).join(' ') : ''
-    throw new Error(detalhes ? `${titulo}: ${detalhes}` : titulo)
-  }
-  return corpo
-}
 
 const formatarPreco = valor => `R$ ${Number(valor ?? 0).toFixed(2)}`
 
 // Identifica uma carga (página + busca + versão) para saber se a tela está atualizada
 const chaveDaCarga = (page, busca, versao) => `${page}|${busca}|${versao}`
 
-function App() {
+// Painel principal (só aparece logado): métricas, cadastro, busca e lista de produtos
+function Painel({ usuario, onSair }) {
   const [produtos, setProdutos] = useState([])
   const [totalPages, setTotalPages] = useState(0)
   const [relatorio, setRelatorio] = useState(null)
@@ -151,7 +124,11 @@ function App() {
             <span className="logo-icon">⬡</span>
             <span className="logo-text">DataServer</span>
           </div>
-          <span className="badge">v1.0</span>
+          <div className="header-usuario">
+            <span className="badge">v1.0</span>
+            <span className="usuario-email" title="Usuário logado">{usuario}</span>
+            <button className="btn-sair" onClick={onSair}>Sair</button>
+          </div>
         </div>
       </header>
 
@@ -303,4 +280,4 @@ function App() {
   )
 }
 
-export default App
+export default Painel
