@@ -8,14 +8,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 // Garante que o navegador (frontend em localhost:5173) consegue chamar a API.
 // O preflight (OPTIONS) é o que o navegador envia antes de DELETE/PUT e de POST com JSON.
-// @WebMvcTest sobe só a camada web: o teste não depende do banco estar acessível.
-@WebMvcTest
+// @TesteDaApi sobe só a camada web (com a segurança real): o teste não depende do banco.
+@TesteDaApi
 class CorsConfigTests {
 
     private static final String FRONTEND = "http://localhost:5173";

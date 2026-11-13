@@ -13,7 +13,7 @@ import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -24,7 +24,8 @@ import com.sun.net.httpserver.HttpServer;
 
 // Testa o /relatorio sem depender do serviço Python real nem do banco:
 // um servidor HTTP falso simula o Python respondendo como texto puro.
-@WebMvcTest
+@TesteDaApi
+@WithMockUser // requisições já autenticadas: aqui o foco são as regras da API, não o login
 class RelatorioControllerTests {
 
     private static final String ANALISE_FALSA = """
