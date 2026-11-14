@@ -39,6 +39,9 @@ cp .env.example .env
 | `JWT_SECRET` | sim | — | Segredo que assina os tokens de login (32+ caracteres aleatórios) |
 | `ADMIN_EMAIL`, `ADMIN_SENHA` | no 1º uso | — | Primeiro usuário, criado na subida do Java |
 | `JWT_EXPIRACAO_HORAS` | não | `8` | Quanto tempo o login vale |
+| `CORS_ORIGENS` | no servidor | `http://localhost:5173` | Sites que podem chamar a API (separados por vírgula) |
+| `CHAVE_INTERNA` | no servidor | vazia | Chave que o Java manda ao Python; vazia = sem exigência |
+| `PORT` | não | `8080` | Porta do Java (o Render define sozinho) |
 | `DB_PORT` / `DB_NAME` | não | `5432` / `postgres` | Conexão com o Supabase |
 | `DB_POOL_SIZE` | não | `5` | Máximo de conexões do Java |
 | `PYTHON_DB_POOL_MAX` | não | `3` | Máximo de conexões do Python |
@@ -78,6 +81,44 @@ npm run dev
 ```
 Para apontar o frontend para outra URL da API, defina `VITE_API_URL` (padrão `http://localhost:8080`).
 
+## Deploy (Render)
+
+O arquivo [`render.yaml`](render.yaml) descreve os 3 serviços (plano grátis, região
+`virginia`, a mesma do Supabase `us-east-1`):
+
+| Serviço | Tipo no Render | URL padrão |
+|---------|----------------|------------|
+| `dataserver-api` | Web Service (Docker, [`dataserver/Dockerfile`](dataserver/Dockerfile)) | `https://dataserver-api.onrender.com` |
+| `dataserver-analise` | Web Service (Python) | `https://dataserver-analise.onrender.com` |
+| `dataserver-web` | Static Site | `https://dataserver-web.onrender.com` |
+
+**Primeiro deploy**
+1. Faça o push da branch para o GitHub (a `main`, ou a branch que o Render vai acompanhar).
+2. No [painel do Render](https://dashboard.render.com): **New > Blueprint**, conecte o
+   GitHub e escolha este repositório.
+3. Preencha o que o Render pedir: `DB_HOST`, `DB_USER` e `DB_PASSWORD` (iguais ao `.env`,
+   nos dois serviços), `ADMIN_EMAIL` e `ADMIN_SENHA`. `JWT_SECRET` e `CHAVE_INTERNA` são
+   gerados pelo próprio Render.
+4. Ao terminar, confira as URLs. Se algum nome já existia, o Render acrescenta um sufixo:
+   aí ajuste `CORS_ORIGENS` e `PYTHON_SERVICE_URL` (na API) e `VITE_API_URL` (no site) e
+   faça um novo deploy dos dois.
+
+Depois disso, cada push na branch acompanhada publica sozinho só o serviço cuja pasta mudou.
+Os testes **não** rodam no Render (os de integração precisam do banco): rode `./mvnw test`
+antes do push.
+
+**Bom saber**
+- O banco é o mesmo Supabase do ambiente local: produtos e usuários são compartilhados. O
+  admin é criado só uma vez; se ele já existe, o `ADMIN_SENHA` do Render não muda a senha.
+- No plano grátis, os serviços "dormem" depois de 15 minutos sem acesso. O primeiro acesso
+  depois disso demora cerca de 1 minuto (o Java acorda, e no primeiro relatório o Python também).
+- O Python fica público, mas o `/analise` só responde com a `CHAVE_INTERNA`; `/saude` é o
+  health check.
+- Conexões com o banco no Render: Java 3 + Python 2. Somadas às 8 do ambiente local,
+  ficam 13 das 15 que o Supabase permite.
+- O login bloqueia por 15 minutos depois de 5 senhas erradas seguidas do mesmo IP para o
+  mesmo e-mail (resposta `429`).
+
 ## API (Java — porta 8080)
 
 Todas as rotas exigem o cabeçalho `Authorization: Bearer <token>`, exceto `POST /auth/login`
@@ -85,7 +126,7 @@ e `GET /hello`. Sem token (ou com token expirado) a resposta é `401`.
 
 | Método | Rota | Descrição | Respostas |
 |--------|------|-----------|-----------|
-| POST   | `/auth/login` | Recebe `{ "email": "...", "senha": "..." }` e devolve `{ token, tipo, email, expiraEm }` | 200, 400, 401 |
+| POST   | `/auth/login` | Recebe `{ "email": "...", "senha": "..." }` e devolve `{ token, tipo, email, expiraEm }` | 200, 400, 401, 429 |
 | GET    | `/auth/eu` | E-mail do usuário logado | 200, 401 |
 | GET    | `/produtos?page=0&size=20&busca=texto` | Lista paginada (`size` de 1 a 100) | 200, 400 |
 | GET    | `/produtos/{id}` | Busca um produto | 200, 404 |
