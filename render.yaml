@@ -43,6 +43,10 @@ services:
         sync: false
       - key: ADMIN_SENHA
         sync: false
+      # O Render fica atrás da Cloudflare, que informa o IP real do visitante neste
+      # cabeçalho (usado pelo limite de tentativas do login)
+      - key: CABECALHO_IP_CLIENTE
+        value: CF-Connecting-IP
       - key: CORS_ORIGENS
         value: https://dataserver-web.onrender.com
       - key: PYTHON_SERVICE_URL
