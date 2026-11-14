@@ -42,6 +42,7 @@ cp .env.example .env
 | `CORS_ORIGENS` | no servidor | `http://localhost:5173` | Sites que podem chamar a API (separados por vírgula) |
 | `CHAVE_INTERNA` | no servidor | vazia | Chave que o Java manda ao Python; vazia = sem exigência |
 | `PORT` | não | `8080` | Porta do Java (o Render define sozinho) |
+| `CABECALHO_IP_CLIENTE` | no servidor | vazio | Cabeçalho com o IP real do visitante (Render: `CF-Connecting-IP`) |
 | `DB_PORT` / `DB_NAME` | não | `5432` / `postgres` | Conexão com o Supabase |
 | `DB_POOL_SIZE` | não | `5` | Máximo de conexões do Java |
 | `PYTHON_DB_POOL_MAX` | não | `3` | Máximo de conexões do Python |
