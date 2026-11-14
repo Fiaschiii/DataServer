@@ -11,12 +11,12 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 // Configuração comum dos testes da camada web (sem banco):
-// sobe os controllers com as regras de segurança reais (SegurancaConfig),
+// sobe os controllers com as regras de segurança reais (SegurancaConfig e o limite de login),
 // um segredo JWT de teste e o repositório de usuários simulado.
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @WebMvcTest
-@Import(SegurancaConfig.class)
+@Import({SegurancaConfig.class, LimiteDeTentativas.class})
 @TestPropertySource(properties = {
     "JWT_SECRET=segredo-usado-somente-nos-testes-0123456789",
     "JWT_EXPIRACAO_HORAS=8",

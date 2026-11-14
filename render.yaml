@@ -1,0 +1,101 @@
+# Blueprint do Render: sobe os 3 serviços do DataServer a partir deste repositório.
+# No painel do Render: New > Blueprint > escolher este repositório.
+# Os valores com "sync: false" são pedidos na criação (credenciais: nunca ficam no Git).
+#
+# URLs: o Render usa https://<name>.onrender.com. Se um nome já estiver em uso, ele
+# acrescenta um sufixo (ex.: dataserver-api-x1y2); nesse caso, corrija CORS_ORIGENS,
+# PYTHON_SERVICE_URL e VITE_API_URL abaixo (ou no painel) com as URLs reais.
+#
+# Região virginia: a mesma do banco no Supabase (us-east-1).
+
+services:
+  # ---------- API Java (Spring Boot) ----------
+  - type: web
+    name: dataserver-api
+    runtime: docker
+    plan: free
+    region: virginia
+    dockerfilePath: ./dataserver/Dockerfile
+    dockerContext: ./dataserver
+    healthCheckPath: /hello
+    buildFilter:
+      paths:
+        - dataserver/**
+    envVars:
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: "5432"
+      - key: DB_NAME
+        value: postgres
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      # Supabase aceita 15 conexões no total. No Render: Java 3 + Python 2 = 5,
+      # sobrando 10 para rodar o sistema local (8) ao mesmo tempo.
+      - key: DB_POOL_SIZE
+        value: "3"
+      # Segredo dos tokens de login: gerado pelo Render, diferente do .env local
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_SENHA
+        sync: false
+      - key: CORS_ORIGENS
+        value: https://dataserver-web.onrender.com
+      - key: PYTHON_SERVICE_URL
+        value: https://dataserver-analise.onrender.com
+      # Mesma chave gerada para o serviço Python
+      - key: CHAVE_INTERNA
+        fromService:
+          type: web
+          name: dataserver-analise
+          envVarKey: CHAVE_INTERNA
+
+  # ---------- Serviço de análise (Python / FastAPI) ----------
+  - type: web
+    name: dataserver-analise
+    runtime: python
+    plan: free
+    region: virginia
+    rootDir: python-service
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /saude
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: "5432"
+      - key: DB_NAME
+        value: postgres
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: PYTHON_DB_POOL_MAX
+        value: "2"
+      # O serviço fica público: sem esta chave no cabeçalho, o /analise responde 401
+      - key: CHAVE_INTERNA
+        generateValue: true
+
+  # ---------- Site (React / Vite) ----------
+  - type: web
+    name: dataserver-web
+    runtime: static
+    # Caminhos a partir da raiz do repo (sem rootDir) para não haver dúvida de onde fica o dist
+    buildCommand: cd frontend && npm ci && npm run build
+    staticPublishPath: frontend/dist
+    buildFilter:
+      paths:
+        - frontend/**
+    envVars:
+      - key: NODE_VERSION
+        value: 24.12.0
+      # Lida no build: mudar exige um novo deploy do site
+      - key: VITE_API_URL
+        value: https://dataserver-api.onrender.com

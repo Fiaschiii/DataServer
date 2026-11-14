@@ -1,5 +1,6 @@
 package com.dataserver.dataserver;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -14,13 +15,15 @@ public class DataserverApplication {
 		SpringApplication.run(DataserverApplication.class, args);
 	}
 
+    // Sites que podem chamar a API pelo navegador (CORS_ORIGENS no .env / no Render,
+    // separados por vírgula). Padrão: o Vite local.
     @Bean
-	public WebMvcConfigurer corsConfigurer() {
+	public WebMvcConfigurer corsConfigurer(@Value("${cors.origens}") String[] origens) {
 		return new WebMvcConfigurer() {
 			@Override
 			public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-				        .allowedOrigins("http://localhost:5173")
+				        .allowedOrigins(origens)
 				        .allowedMethods("GET", "POST", "PUT", "DELETE");
 			}
 		};

@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-// Converte erros do cliente em respostas 400/401/404 com mensagens claras,
+// Converte erros do cliente em respostas 400/401/404/429 com mensagens claras,
 // no formato: {"status": 400, "erro": "...", "campos": {"campo": "mensagem"}}
 @RestControllerAdvice
 public class TratadorDeErros {
@@ -66,6 +66,13 @@ public class TratadorDeErros {
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public Map<String, Object> credenciaisInvalidas(CredenciaisInvalidasException ex) {
         return resposta(HttpStatus.UNAUTHORIZED, ex.getMessage(), Map.of());
+    }
+
+    // POST /auth/login depois de erros demais seguidos
+    @ExceptionHandler(MuitasTentativasException.class)
+    @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
+    public Map<String, Object> muitasTentativas(MuitasTentativasException ex) {
+        return resposta(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage(), Map.of());
     }
 
     private Map<String, Object> resposta(String erro, Map<String, String> campos) {

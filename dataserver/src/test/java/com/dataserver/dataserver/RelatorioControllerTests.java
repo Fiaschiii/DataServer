@@ -23,7 +23,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.sun.net.httpserver.HttpServer;
 
 // Testa o /relatorio sem depender do serviço Python real nem do banco:
-// um servidor HTTP falso simula o Python respondendo como texto puro.
+// um servidor HTTP falso simula o Python respondendo como texto puro
+// e, como o Python de verdade no Render, recusando chamadas sem a chave interna.
 @TesteDaApi
 @WithMockUser // requisições já autenticadas: aqui o foco são as regras da API, não o login
 class RelatorioControllerTests {
@@ -33,12 +34,19 @@ class RelatorioControllerTests {
         "produto_mais_caro":{"id":2,"nome":"Caro","preco":20.0},\
         "produto_mais_barato":{"id":1,"nome":"Barato","preco":10.0}}""";
 
+    private static final String CHAVE = "chave-interna-de-teste";
+
     private static final HttpServer pythonFalso = iniciarPythonFalso();
 
     private static HttpServer iniciarPythonFalso() {
         try {
             HttpServer server = HttpServer.create(new InetSocketAddress("localhost", 0), 0);
             server.createContext("/analise", exchange -> {
+                if (!CHAVE.equals(exchange.getRequestHeaders().getFirst("X-Chave-Interna"))) {
+                    exchange.sendResponseHeaders(401, -1);
+                    exchange.close();
+                    return;
+                }
                 byte[] corpo = ANALISE_FALSA.getBytes(StandardCharsets.UTF_8);
                 // Content-Type propositalmente "errado" para provar que o Java normaliza para JSON
                 exchange.getResponseHeaders().set("Content-Type", "text/plain");
@@ -57,6 +65,7 @@ class RelatorioControllerTests {
     @DynamicPropertySource
     static void apontarParaPythonFalso(DynamicPropertyRegistry registry) {
         registry.add("python.service.url", () -> "http://localhost:" + pythonFalso.getAddress().getPort());
+        registry.add("CHAVE_INTERNA", () -> CHAVE);
     }
 
     @AfterAll
@@ -72,7 +81,7 @@ class RelatorioControllerTests {
     private ProdutoRepository produtoRepository;
 
     @Test
-    void relatorioRespondeComoJson() throws Exception {
+    void relatorioEnviaAChaveInternaERespondeComoJson() throws Exception {
         mockMvc.perform(get("/relatorio"))
             .andExpect(status().isOk())
             .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))

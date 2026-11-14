@@ -30,6 +30,7 @@ import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 
 import com.jayway.jsonpath.JsonPath;
 
@@ -52,11 +53,15 @@ class AuthControllerTests {
     @Autowired
     private JwtEncoder jwtEncoder;
 
+    @Autowired
+    private LimiteDeTentativas limiteDeTentativas;
+
     @MockitoBean
     private ProdutoRepository produtoRepository;
 
     @BeforeEach
     void cadastrarAdmin() {
+        limiteDeTentativas.limparTudo(); // o contexto é compartilhado entre os testes
         Usuario admin = new Usuario(EMAIL, passwordEncoder.encode(SENHA));
         when(usuarioRepository.findByEmail(EMAIL)).thenReturn(Optional.of(admin));
         when(produtoRepository.findAll(any(Pageable.class))).thenReturn(new PageImpl<>(List.of()));
@@ -123,6 +128,51 @@ class AuthControllerTests {
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.erro").value("Dados inválidos"))
             .andExpect(jsonPath("$.campos." + campo).value(mensagem));
+    }
+
+    // ---------- Limite de tentativas ----------
+
+    private ResultActions tentarLogin(String ip, String senha) throws Exception {
+        return mockMvc.perform(post("/auth/login")
+            .with(request -> { request.setRemoteAddr(ip); return request; })
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"email\":\"" + EMAIL + "\",\"senha\":\"" + senha + "\"}"));
+    }
+
+    @Test
+    void depoisDe5ErrosSeguidosBloqueiaAteASenhaCertaCom429() throws Exception {
+        for (int i = 0; i < LimiteDeTentativas.MAX_FALHAS; i++) {
+            tentarLogin("10.0.0.1", "senha-errada").andExpect(status().isUnauthorized());
+        }
+
+        tentarLogin("10.0.0.1", SENHA)
+            .andExpect(status().isTooManyRequests())
+            .andExpect(jsonPath("$.status").value(429))
+            .andExpect(jsonPath("$.erro").value("Muitas tentativas de login. Aguarde 15 minutos e tente novamente."));
+    }
+
+    @Test
+    void bloqueioDeUmIpNaoTrancaOMesmoUsuarioEmOutroIp() throws Exception {
+        for (int i = 0; i < LimiteDeTentativas.MAX_FALHAS; i++) {
+            tentarLogin("10.0.0.66", "senha-errada");
+        }
+        tentarLogin("10.0.0.66", SENHA).andExpect(status().isTooManyRequests());
+
+        tentarLogin("10.0.0.2", SENHA).andExpect(status().isOk());
+    }
+
+    @Test
+    void loginCertoZeraOsErrosAnteriores() throws Exception {
+        for (int i = 0; i < LimiteDeTentativas.MAX_FALHAS - 1; i++) {
+            tentarLogin("10.0.0.3", "senha-errada");
+        }
+        tentarLogin("10.0.0.3", SENHA).andExpect(status().isOk());
+
+        // A contagem recomeçou: mais 4 erros ainda não bloqueiam
+        for (int i = 0; i < LimiteDeTentativas.MAX_FALHAS - 1; i++) {
+            tentarLogin("10.0.0.3", "senha-errada").andExpect(status().isUnauthorized());
+        }
+        tentarLogin("10.0.0.3", SENHA).andExpect(status().isOk());
     }
 
     // ---------- Rotas protegidas ----------

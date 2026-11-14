@@ -11,9 +11,17 @@ public class RelatorioController {
 
     private final RestClient restClient;
 
-    // URL do serviço Python (configurável em application.properties / variável PYTHON_SERVICE_URL)
-    public RelatorioController(@Value("${python.service.url}") String pythonServiceUrl) {
-        this.restClient = RestClient.create(pythonServiceUrl);
+    // Cabeçalho que prova ao Python que a chamada veio do Java (no Render o Python é público)
+    static final String CABECALHO_CHAVE = "X-Chave-Interna";
+
+    // URL do serviço Python (PYTHON_SERVICE_URL) e a chave combinada com ele (CHAVE_INTERNA)
+    public RelatorioController(@Value("${python.service.url}") String pythonServiceUrl,
+                               @Value("${python.service.chave}") String chaveInterna) {
+        RestClient.Builder builder = RestClient.builder().baseUrl(pythonServiceUrl);
+        if (!chaveInterna.isEmpty()) {
+            builder.defaultHeader(CABECALHO_CHAVE, chaveInterna);
+        }
+        this.restClient = builder.build();
     }
 
     // GET /relatorio - repassa a análise do serviço Python.
