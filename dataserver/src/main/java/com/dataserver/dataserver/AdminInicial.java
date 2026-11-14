@@ -8,9 +8,12 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
-// Não existe cadastro aberto de usuários: o primeiro acesso é criado aqui, na subida
-// do Java, a partir de ADMIN_EMAIL e ADMIN_SENHA do .env. Se o e-mail já existe,
-// nada muda (a senha do banco continua valendo, mesmo que ADMIN_SENHA seja trocada).
+// Não existe cadastro aberto de usuários: o administrador é criado aqui, na subida
+// do Java, a partir de ADMIN_EMAIL e ADMIN_SENHA (.env local / painel do Render).
+// ADMIN_SENHA é a fonte da verdade: se o e-mail já existe com outra senha, o hash do
+// banco é atualizado. Assim trocar a variável e reiniciar basta para trocar a senha.
+// Atenção: o .env local e o Render usam o mesmo banco; com senhas diferentes nos dois,
+// vale a do último que subiu.
 @Component
 public class AdminInicial implements ApplicationRunner {
 
@@ -41,14 +44,20 @@ public class AdminInicial implements ApplicationRunner {
             }
             return;
         }
-        if (usuarioRepository.existsByEmail(email)) {
-            return;
-        }
         if (senha.length() < TAMANHO_MINIMO_SENHA) {
             throw new IllegalStateException(
                 "ADMIN_SENHA deve ter pelo menos " + TAMANHO_MINIMO_SENHA + " caracteres.");
         }
-        usuarioRepository.save(new Usuario(email, passwordEncoder.encode(senha)));
-        log.info("Usuário administrador {} criado.", email);
+        Usuario existente = usuarioRepository.findByEmail(email).orElse(null);
+        if (existente == null) {
+            usuarioRepository.save(new Usuario(email, passwordEncoder.encode(senha)));
+            log.info("Usuário administrador {} criado.", email);
+            return;
+        }
+        if (!passwordEncoder.matches(senha, existente.getSenhaHash())) {
+            existente.setSenhaHash(passwordEncoder.encode(senha));
+            usuarioRepository.save(existente);
+            log.info("Senha do administrador {} atualizada a partir de ADMIN_SENHA.", email);
+        }
     }
 }

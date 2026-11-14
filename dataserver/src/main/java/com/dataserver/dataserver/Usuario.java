@@ -35,4 +35,6 @@ public class Usuario {
     public Long getId() { return id; }
     public String getEmail() { return email; }
     public String getSenhaHash() { return senhaHash; }
+
+    public void setSenhaHash(String senhaHash) { this.senhaHash = senhaHash; }
 }

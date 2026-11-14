@@ -4,6 +4,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -12,7 +13,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-// Converte erros do cliente em respostas 400/401/404/429 com mensagens claras,
+// Converte erros em respostas 400/401/404/429/502/503 com mensagens claras,
 // no formato: {"status": 400, "erro": "...", "campos": {"campo": "mensagem"}}
 @RestControllerAdvice
 public class TratadorDeErros {
@@ -73,6 +74,13 @@ public class TratadorDeErros {
     @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
     public Map<String, Object> muitasTentativas(MuitasTentativasException ex) {
         return resposta(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage(), Map.of());
+    }
+
+    // GET /relatorio com o serviço Python fora do ar (503) ou recusando a chamada (502)
+    @ExceptionHandler(ServicoDeAnaliseException.class)
+    public ResponseEntity<Map<String, Object>> servicoDeAnalise(ServicoDeAnaliseException ex) {
+        return ResponseEntity.status(ex.getStatus())
+            .body(resposta(ex.getStatus(), ex.getMessage(), Map.of()));
     }
 
     private Map<String, Object> resposta(String erro, Map<String, String> campos) {
