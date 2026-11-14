@@ -8,16 +8,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -26,10 +27,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.sun.net.httpserver.HttpServer;
 
 // Testa o /relatorio sem depender do serviço Python real nem do banco:
-// um servidor HTTP falso simula o Python respondendo como texto puro
-// e, como o Python de verdade no Render, recusando chamadas sem a chave interna.
-@TesteDaApi
-@WithMockUser // requisições já autenticadas: aqui o foco são as regras da API, não o login
+// um servidor HTTP falso simula o Python (respondendo como texto puro ou com erro).
 class RelatorioControllerTests {
 
     private static final String ANALISE_FALSA = """
@@ -37,11 +35,8 @@ class RelatorioControllerTests {
         "produto_mais_caro":{"id":2,"nome":"Caro","preco":20.0},\
         "produto_mais_barato":{"id":1,"nome":"Barato","preco":10.0}}""";
 
-    private static final String CHAVE = "chave-interna-de-teste";
-
-    // Status que o Python falso devolve antes de responder normalmente (simula ele acordando)
-    private static final ConcurrentLinkedQueue<Integer> falhasProgramadas = new ConcurrentLinkedQueue<>();
-    private static final AtomicInteger chamadas = new AtomicInteger();
+    // Status que o Python falso devolve; 200 = responde a análise normalmente
+    private static final AtomicInteger statusDoPython = new AtomicInteger(200);
 
     private static final HttpServer pythonFalso = iniciarPythonFalso();
 
@@ -49,15 +44,9 @@ class RelatorioControllerTests {
         try {
             HttpServer server = HttpServer.create(new InetSocketAddress("localhost", 0), 0);
             server.createContext("/analise", exchange -> {
-                chamadas.incrementAndGet();
-                Integer falha = falhasProgramadas.poll();
-                if (falha != null) {
-                    exchange.sendResponseHeaders(falha, -1);
-                    exchange.close();
-                    return;
-                }
-                if (!CHAVE.equals(exchange.getRequestHeaders().getFirst("X-Chave-Interna"))) {
-                    exchange.sendResponseHeaders(401, -1);
+                int status = statusDoPython.get();
+                if (status != 200) {
+                    exchange.sendResponseHeaders(status, -1);
                     exchange.close();
                     return;
                 }
@@ -76,76 +65,82 @@ class RelatorioControllerTests {
         }
     }
 
-    @DynamicPropertySource
-    static void apontarParaPythonFalso(DynamicPropertyRegistry registry) {
-        registry.add("python.service.url", () -> "http://localhost:" + pythonFalso.getAddress().getPort());
-        registry.add("CHAVE_INTERNA", () -> CHAVE);
-        registry.add("python.service.espera-entre-tentativas-ms", () -> "10");
-        registry.add("python.service.manter-acordado", () -> "false");
-    }
-
-    @BeforeEach
-    void limparFalhas() {
-        falhasProgramadas.clear();
-        chamadas.set(0);
-    }
-
     @AfterAll
     static void pararPythonFalso() {
         pythonFalso.stop(0);
     }
 
-    @Autowired
-    private MockMvc mockMvc;
+    @Nested
+    @TesteDaApi
+    @WithMockUser // requisições já autenticadas: aqui o foco são as regras da API, não o login
+    class ComOPythonRodando {
 
-    // Os controllers dependem do repositório; aqui ele é simulado (sem banco).
-    @MockitoBean
-    private ProdutoRepository produtoRepository;
-
-    @Test
-    void relatorioEnviaAChaveInternaERespondeComoJson() throws Exception {
-        mockMvc.perform(get("/relatorio"))
-            .andExpect(status().isOk())
-            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.total_produtos").value(2))
-            .andExpect(jsonPath("$.preco_medio").value(15.0))
-            .andExpect(jsonPath("$.produto_mais_caro.nome").value("Caro"));
-    }
-
-    // Render acordando o Python: as primeiras respostas são 502/503, depois funciona
-    @Test
-    void relatorioTentaDeNovoEnquantoOPythonAcorda() throws Exception {
-        falhasProgramadas.add(503);
-        falhasProgramadas.add(502);
-
-        mockMvc.perform(get("/relatorio"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.total_produtos").value(2));
-        org.junit.jupiter.api.Assertions.assertEquals(3, chamadas.get());
-    }
-
-    // Python continua fora depois de todas as tentativas: 503 em JSON, não 500
-    @Test
-    void relatorioResponde503QuandoOPythonNaoVolta() throws Exception {
-        for (int i = 0; i < 5; i++) {
-            falhasProgramadas.add(500);
+        @DynamicPropertySource
+        static void apontarParaPythonFalso(DynamicPropertyRegistry registry) {
+            registry.add("python.service.url", () -> "http://localhost:" + pythonFalso.getAddress().getPort());
         }
 
-        mockMvc.perform(get("/relatorio"))
-            .andExpect(status().isServiceUnavailable())
-            .andExpect(jsonPath("$.status").value(503))
-            .andExpect(jsonPath("$.erro").exists());
-        org.junit.jupiter.api.Assertions.assertEquals(3, chamadas.get());
+        @Autowired
+        private MockMvc mockMvc;
+
+        @MockitoBean
+        private ProdutoRepository produtoRepository;
+
+        @BeforeEach
+        void pythonNormal() {
+            statusDoPython.set(200);
+        }
+
+        @Test
+        void relatorioRespondeComoJson() throws Exception {
+            mockMvc.perform(get("/relatorio"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.total_produtos").value(2))
+                .andExpect(jsonPath("$.preco_medio").value(15.0))
+                .andExpect(jsonPath("$.produto_mais_caro.nome").value("Caro"));
+        }
+
+        // Python com erro (ex.: banco fora): 502 em JSON, não 500
+        @Test
+        void relatorioResponde502QuandoOPythonDaErro() throws Exception {
+            statusDoPython.set(500);
+
+            mockMvc.perform(get("/relatorio"))
+                .andExpect(status().isBadGateway())
+                .andExpect(jsonPath("$.status").value(502))
+                .andExpect(jsonPath("$.erro").exists());
+        }
     }
 
-    // Python recusou (ex.: CHAVE_INTERNA diferente): 502 sem repetir a chamada
-    @Test
-    void relatorioResponde502SemRepetirQuandoOPythonRecusa() throws Exception {
-        falhasProgramadas.add(401);
+    @Nested
+    @TesteDaApi
+    @WithMockUser
+    class ComOPythonParado {
 
-        mockMvc.perform(get("/relatorio"))
-            .andExpect(status().isBadGateway())
-            .andExpect(jsonPath("$.status").value(502));
-        org.junit.jupiter.api.Assertions.assertEquals(1, chamadas.get());
+        // Porta livre em que nada está escutando (como o Python desligado)
+        @DynamicPropertySource
+        static void apontarParaPortaSemPython(DynamicPropertyRegistry registry) throws IOException {
+            int portaLivre;
+            try (ServerSocket socket = new ServerSocket(0)) {
+                portaLivre = socket.getLocalPort();
+            }
+            registry.add("python.service.url", () -> "http://localhost:" + portaLivre);
+        }
+
+        @Autowired
+        private MockMvc mockMvc;
+
+        @MockitoBean
+        private ProdutoRepository produtoRepository;
+
+        @Test
+        void relatorioResponde503ComMensagemClara() throws Exception {
+            mockMvc.perform(get("/relatorio"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.status").value(503))
+                .andExpect(jsonPath("$.erro").value(
+                    "O serviço de análise (Python) não está rodando. Inicie-o na porta 8001."));
+        }
     }
 }

@@ -42,8 +42,6 @@ public class AuthController {
     private final JwtEncoder jwtEncoder;
     private final LimiteDeTentativas limiteDeTentativas;
     private final Duration validadeDoToken;
-    // Cabeçalho com o IP real do visitante, posto pelo proxy da frente (vazio = IP da conexão)
-    private final String cabecalhoIpCliente;
     // Hash de uma senha qualquer, comparado quando o e-mail não existe: assim a resposta
     // demora o mesmo tanto e não dá para descobrir pelo tempo quais e-mails têm conta.
     private final String hashFalso;
@@ -52,14 +50,12 @@ public class AuthController {
                           PasswordEncoder passwordEncoder,
                           JwtEncoder jwtEncoder,
                           LimiteDeTentativas limiteDeTentativas,
-                          @Value("${seguranca.jwt.expiracao-horas}") long horasDeValidade,
-                          @Value("${seguranca.ip-cliente.cabecalho}") String cabecalhoIpCliente) {
+                          @Value("${seguranca.jwt.expiracao-horas}") long horasDeValidade) {
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtEncoder = jwtEncoder;
         this.limiteDeTentativas = limiteDeTentativas;
         this.validadeDoToken = Duration.ofHours(horasDeValidade);
-        this.cabecalhoIpCliente = cabecalhoIpCliente;
         this.hashFalso = passwordEncoder.encode("senha-que-nunca-confere");
     }
 
@@ -68,7 +64,7 @@ public class AuthController {
     @PostMapping("/login")
     public LoginResponse login(@Valid @RequestBody LoginRequest dados, HttpServletRequest request) {
         String emailInformado = Usuario.normalizarEmail(dados.email());
-        String chave = ipDoCliente(request) + "|" + emailInformado;
+        String chave = request.getRemoteAddr() + "|" + emailInformado;
         if (limiteDeTentativas.bloqueado(chave)) {
             throw new MuitasTentativasException();
         }
@@ -96,21 +92,6 @@ public class AuthController {
         String token = jwtEncoder.encode(JwtEncoderParameters.from(cabecalho, claims)).getTokenValue();
 
         return new LoginResponse(token, "Bearer", email, expiraEm);
-    }
-
-    // No Render a requisição passa pela Cloudflare: o IP da conexão (e o último do
-    // X-Forwarded-For) é de um servidor dela, que muda a cada requisição, e o limite de
-    // tentativas nunca acumularia. A Cloudflare põe o IP real do visitante no
-    // CF-Connecting-IP (e sobrescreve o que o visitante mandar), por isso o cabeçalho é
-    // configurável. Sem cabeçalho configurado, ou se ele não vier, vale o IP da conexão.
-    private String ipDoCliente(HttpServletRequest request) {
-        if (!cabecalhoIpCliente.isEmpty()) {
-            String ip = request.getHeader(cabecalhoIpCliente);
-            if (ip != null && !ip.isBlank()) {
-                return ip.trim();
-            }
-        }
-        return request.getRemoteAddr();
     }
 
     // GET /auth/eu - quem está logado (o frontend usa para conferir se o token ainda vale)

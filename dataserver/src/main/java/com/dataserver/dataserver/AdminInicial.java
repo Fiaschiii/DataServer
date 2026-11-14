@@ -9,11 +9,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 // Não existe cadastro aberto de usuários: o administrador é criado aqui, na subida
-// do Java, a partir de ADMIN_EMAIL e ADMIN_SENHA (.env local / painel do Render).
+// do Java, a partir de ADMIN_EMAIL e ADMIN_SENHA do .env.
 // ADMIN_SENHA é a fonte da verdade: se o e-mail já existe com outra senha, o hash do
 // banco é atualizado. Assim trocar a variável e reiniciar basta para trocar a senha.
-// Atenção: o .env local e o Render usam o mesmo banco; com senhas diferentes nos dois,
-// vale a do último que subiu.
 @Component
 public class AdminInicial implements ApplicationRunner {
 

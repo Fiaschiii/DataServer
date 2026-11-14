@@ -1,6 +1,0 @@
-# Fora da imagem: compilados locais (a imagem compila do zero) e credenciais
-target/
-.env
-*.log
-.idea/
-.vscode/

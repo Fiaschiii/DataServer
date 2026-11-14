@@ -76,7 +76,7 @@ public class TratadorDeErros {
         return resposta(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage(), Map.of());
     }
 
-    // GET /relatorio com o serviço Python fora do ar (503) ou recusando a chamada (502)
+    // GET /relatorio com o serviço Python parado (503) ou respondendo com erro (502)
     @ExceptionHandler(ServicoDeAnaliseException.class)
     public ResponseEntity<Map<String, Object>> servicoDeAnalise(ServicoDeAnaliseException ex) {
         return ResponseEntity.status(ex.getStatus())

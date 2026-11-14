@@ -12,10 +12,10 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-// No servidor, o site tem outra URL: CORS_ORIGENS troca as origens aceitas
+// Se o frontend rodar em outra URL, CORS_ORIGENS troca as origens aceitas
 // (lista separada por vírgula, espaços ignorados) e o localhost deixa de valer.
 @TesteDaApi
-@TestPropertySource(properties = "CORS_ORIGENS=https://dataserver-web.onrender.com, https://www.meusite.com.br")
+@TestPropertySource(properties = "CORS_ORIGENS=http://localhost:3000, https://www.meusite.com.br")
 class CorsOrigensConfiguraveisTests {
 
     @Autowired
@@ -25,7 +25,7 @@ class CorsOrigensConfiguraveisTests {
     private ProdutoRepository produtoRepository;
 
     @ParameterizedTest
-    @ValueSource(strings = {"https://dataserver-web.onrender.com", "https://www.meusite.com.br"})
+    @ValueSource(strings = {"http://localhost:3000", "https://www.meusite.com.br"})
     void origensConfiguradasSaoAceitas(String origem) throws Exception {
         mockMvc.perform(options("/produtos")
                 .header("Origin", origem)

@@ -1,11 +1,10 @@
-import hmac
 import os
 import threading
 from contextlib import asynccontextmanager, contextmanager
 from pathlib import Path
 
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi import FastAPI
 import psycopg2
 import psycopg2.extras
 from psycopg2.pool import ThreadedConnectionPool
@@ -17,11 +16,6 @@ load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 # Máximo de conexões abertas ao mesmo tempo com o banco (o Supabase tem limite
 # de conexões compartilhado com o Java). Requisições além disso esperam a vez.
 MAX_CONEXOES = int(os.environ.get("PYTHON_DB_POOL_MAX", "3"))
-
-# No Render o serviço fica público na internet: com CHAVE_INTERNA definida, o /analise
-# só responde a quem mandar a mesma chave no cabeçalho X-Chave-Interna (o Java).
-# Vazia (uso local) = sem exigência.
-CHAVE_INTERNA = os.environ.get("CHAVE_INTERNA", "")
 
 _pool = None
 _pool_lock = threading.Lock()
@@ -76,13 +70,7 @@ async def lifespan(app):
 app = FastAPI(lifespan=lifespan)
 
 
-def exigir_chave_interna(x_chave_interna: str | None = Header(default=None)):
-    # compare_digest: a comparação leva o mesmo tempo acerte ou erre (não vaza a chave)
-    if CHAVE_INTERNA and not hmac.compare_digest(x_chave_interna or "", CHAVE_INTERNA):
-        raise HTTPException(status_code=401, detail="Chave interna ausente ou inválida")
-
-
-# Health check do Render: responde sem tocar no banco
+# Verificação rápida de que o serviço está no ar (não toca no banco)
 @app.get("/saude")
 def saude():
     return {"status": "ok"}
@@ -105,7 +93,7 @@ SQL_ANALISE = """
 """
 
 
-@app.get("/analise", dependencies=[Depends(exigir_chave_interna)])
+@app.get("/analise")
 def analisar_produtos():
     with conexao() as conn:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cursor:
