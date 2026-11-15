@@ -208,11 +208,11 @@ body {
 
 .status {
   font-size: 0.7rem;
-  background-color: #1a4731;
-  color: #3fb950;
+  font-weight: 600;
+  background-color: #238636;
+  color: #fff;
   padding: 0.2rem 0.6rem;
   border-radius: 20px;
-  border: 1px solid #2ea043;
 }
 
 
@@ -308,17 +308,17 @@ body {
 .btn-deletar {
   padding: 0.3rem 0.9rem;
   border-radius: 6px;
-  background-color: transparent;
-  color: #f85149;
-  border: 1px solid #f8514955;
+  background-color: #da3633;
+  color: #fff;
+  border: none;
   cursor: pointer;
   font-size: 0.8rem;
-  transition: background-color 0.2s, border-color 0.2s;
+  font-weight: 600;
+  transition: background-color 0.2s;
 }
 
 .btn-deletar:hover {
-  background-color: #f8514922;
-  border-color: #f85149;
+  background-color: #f85149;
 }
 
 .search-bar {
