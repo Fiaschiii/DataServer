@@ -263,7 +263,6 @@ function Painel({ nomeUsuario, email, onSair }) {
         <section className={`table-section${atualizando ? ' atualizando' : ''}`}>
           <div className="table-header">
             <h2>Produtos</h2>
-            <span className="tag">Java API</span>
           </div>
           <table className="table">
             <thead>
