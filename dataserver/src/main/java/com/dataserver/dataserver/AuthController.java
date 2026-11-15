@@ -2,7 +2,6 @@ package com.dataserver.dataserver;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -35,7 +34,10 @@ public class AuthController {
         }
     }
 
-    public record LoginResponse(String token, String tipo, String email, Instant expiraEm) {}
+    // nome pode vir null (usuário sem nome cadastrado): o painel mostra o e-mail
+    public record LoginResponse(String token, String tipo, String email, String nome, Instant expiraEm) {}
+
+    public record UsuarioLogado(String email, String nome) {}
 
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
@@ -91,12 +93,14 @@ public class AuthController {
         JwsHeader cabecalho = JwsHeader.with(MacAlgorithm.HS256).build();
         String token = jwtEncoder.encode(JwtEncoderParameters.from(cabecalho, claims)).getTokenValue();
 
-        return new LoginResponse(token, "Bearer", email, expiraEm);
+        return new LoginResponse(token, "Bearer", email, usuario.get().getNome(), expiraEm);
     }
 
-    // GET /auth/eu - quem está logado (o frontend usa para conferir se o token ainda vale)
+    // GET /auth/eu - quem está logado (e-mail e nome)
     @GetMapping("/eu")
-    public Map<String, String> eu(Authentication autenticacao) {
-        return Map.of("email", autenticacao.getName());
+    public UsuarioLogado eu(Authentication autenticacao) {
+        String email = autenticacao.getName();
+        String nome = usuarioRepository.findByEmail(email).map(Usuario::getNome).orElse(null);
+        return new UsuarioLogado(email, nome);
     }
 }

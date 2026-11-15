@@ -9,9 +9,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 // Não existe cadastro aberto de usuários: o administrador é criado aqui, na subida
-// do Java, a partir de ADMIN_EMAIL e ADMIN_SENHA do .env.
+// do Java, a partir de ADMIN_EMAIL, ADMIN_SENHA e ADMIN_NOME (opcional) do .env.
 // ADMIN_SENHA é a fonte da verdade: se o e-mail já existe com outra senha, o hash do
 // banco é atualizado. Assim trocar a variável e reiniciar basta para trocar a senha.
+// O mesmo vale para o nome exibido no painel (ADMIN_NOME vazio = mantém o do banco).
 @Component
 public class AdminInicial implements ApplicationRunner {
 
@@ -22,15 +23,18 @@ public class AdminInicial implements ApplicationRunner {
     private final PasswordEncoder passwordEncoder;
     private final String email;
     private final String senha;
+    private final String nome;
 
     public AdminInicial(UsuarioRepository usuarioRepository,
                         PasswordEncoder passwordEncoder,
                         @Value("${seguranca.admin.email}") String email,
-                        @Value("${seguranca.admin.senha}") String senha) {
+                        @Value("${seguranca.admin.senha}") String senha,
+                        @Value("${seguranca.admin.nome:}") String nome) {
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
         this.email = Usuario.normalizarEmail(email);
         this.senha = senha;
+        this.nome = nome == null ? "" : nome.trim();
     }
 
     @Override
@@ -48,14 +52,25 @@ public class AdminInicial implements ApplicationRunner {
         }
         Usuario existente = usuarioRepository.findByEmail(email).orElse(null);
         if (existente == null) {
-            usuarioRepository.save(new Usuario(email, passwordEncoder.encode(senha)));
+            Usuario novo = new Usuario(email, passwordEncoder.encode(senha));
+            novo.setNome(nome.isEmpty() ? null : nome);
+            usuarioRepository.save(novo);
             log.info("Usuário administrador {} criado.", email);
             return;
         }
+        boolean mudou = false;
         if (!passwordEncoder.matches(senha, existente.getSenhaHash())) {
             existente.setSenhaHash(passwordEncoder.encode(senha));
-            usuarioRepository.save(existente);
             log.info("Senha do administrador {} atualizada a partir de ADMIN_SENHA.", email);
+            mudou = true;
+        }
+        if (!nome.isEmpty() && !nome.equals(existente.getNome())) {
+            existente.setNome(nome);
+            log.info("Nome do administrador {} atualizado a partir de ADMIN_NOME.", email);
+            mudou = true;
+        }
+        if (mudou) {
+            usuarioRepository.save(existente);
         }
     }
 }

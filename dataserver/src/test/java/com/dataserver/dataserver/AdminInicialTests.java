@@ -24,7 +24,11 @@ class AdminInicialTests {
     private final PasswordEncoder encoder = new BCryptPasswordEncoder(4); // custo baixo: teste rápido
 
     private void subir(String senha) {
-        new AdminInicial(repositorio, encoder, EMAIL, senha).run(null);
+        subir(senha, "");
+    }
+
+    private void subir(String senha, String nome) {
+        new AdminInicial(repositorio, encoder, EMAIL, senha, nome).run(null);
     }
 
     @Test
@@ -58,6 +62,41 @@ class AdminInicialTests {
         subir("senha-atual-123");
 
         verify(repositorio, never()).save(any());
+    }
+
+    @Test
+    void criaOAdministradorComONome() {
+        when(repositorio.findByEmail(EMAIL)).thenReturn(Optional.empty());
+
+        subir("senha-nova-123", "  Maria Silva ");
+
+        ArgumentCaptor<Usuario> salvo = ArgumentCaptor.forClass(Usuario.class);
+        verify(repositorio).save(salvo.capture());
+        assertEquals("Maria Silva", salvo.getValue().getNome());
+    }
+
+    @Test
+    void atualizaONomeQuandoADMIN_NOMEMudou() {
+        Usuario existente = new Usuario(EMAIL, encoder.encode("senha-atual-123"));
+        existente.setNome("Nome Antigo");
+        when(repositorio.findByEmail(EMAIL)).thenReturn(Optional.of(existente));
+
+        subir("senha-atual-123", "Nome Novo");
+
+        verify(repositorio).save(existente);
+        assertEquals("Nome Novo", existente.getNome());
+    }
+
+    @Test
+    void ADMIN_NOMEVazioMantemONomeDoBanco() {
+        Usuario existente = new Usuario(EMAIL, encoder.encode("senha-atual-123"));
+        existente.setNome("Nome do Banco");
+        when(repositorio.findByEmail(EMAIL)).thenReturn(Optional.of(existente));
+
+        subir("senha-atual-123", "");
+
+        verify(repositorio, never()).save(any());
+        assertEquals("Nome do Banco", existente.getNome());
     }
 
     @Test

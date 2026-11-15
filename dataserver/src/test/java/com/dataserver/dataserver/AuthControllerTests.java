@@ -63,6 +63,7 @@ class AuthControllerTests {
     void cadastrarAdmin() {
         limiteDeTentativas.limparTudo(); // o contexto é compartilhado entre os testes
         Usuario admin = new Usuario(EMAIL, passwordEncoder.encode(SENHA));
+        admin.setNome("Admin de Teste");
         when(usuarioRepository.findByEmail(EMAIL)).thenReturn(Optional.of(admin));
         when(produtoRepository.findAll(any(Pageable.class))).thenReturn(new PageImpl<>(List.of()));
     }
@@ -86,6 +87,7 @@ class AuthControllerTests {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.tipo").value("Bearer"))
             .andExpect(jsonPath("$.email").value(EMAIL))
+            .andExpect(jsonPath("$.nome").value("Admin de Teste"))
             .andExpect(jsonPath("$.token").isNotEmpty())
             .andExpect(jsonPath("$.expiraEm").isNotEmpty());
 
@@ -95,7 +97,8 @@ class AuthControllerTests {
             .andExpect(status().isOk());
         mockMvc.perform(get("/auth/eu").header("Authorization", "Bearer " + token))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.email").value(EMAIL));
+            .andExpect(jsonPath("$.email").value(EMAIL))
+            .andExpect(jsonPath("$.nome").value("Admin de Teste"));
     }
 
     @Test

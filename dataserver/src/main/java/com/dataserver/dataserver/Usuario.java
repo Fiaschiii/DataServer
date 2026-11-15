@@ -16,6 +16,10 @@ public class Usuario {
     @Column(nullable = false, unique = true)
     private String email;
 
+    // Nome exibido no painel (opcional: sem ele, o painel mostra o e-mail)
+    @Column(length = 100)
+    private String nome;
+
     @Column(name = "senha_hash", nullable = false)
     private String senhaHash;
 
@@ -34,6 +38,8 @@ public class Usuario {
 
     public Long getId() { return id; }
     public String getEmail() { return email; }
+    public String getNome() { return nome; }
+    public void setNome(String nome) { this.nome = nome; }
     public String getSenhaHash() { return senhaHash; }
 
     public void setSenhaHash(String senhaHash) { this.senhaHash = senhaHash; }
