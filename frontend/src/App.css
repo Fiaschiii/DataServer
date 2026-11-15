@@ -109,9 +109,26 @@ body {
 }
 
 .metric-value {
-  font-size: 1.4rem;
+  /* Diminui um pouco em telas estreitas para valores grandes caberem no card */
+  font-size: clamp(1.15rem, 1.6vw, 1.4rem);
   font-weight: 600;
   color: #e6edf3;
+  /* Algarismos com a mesma largura: os números ficam alinhados e não "dançam" */
+  font-variant-numeric: tabular-nums;
+}
+
+/* Nome do produto: se for longo, corta com "..." (o nome inteiro aparece no title) */
+.metric-texto {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.metric-detalhe {
+  margin-top: 0.25rem;
+  font-size: 0.85rem;
+  color: #8b949e;
+  font-variant-numeric: tabular-nums;
 }
 
 .table-section {
@@ -165,6 +182,12 @@ body {
   font-size: 0.9rem;
   color: #c9d1d9;
   border-top: 1px solid #21262d;
+}
+
+/* Coluna de preço: algarismos de mesma largura e sem quebrar "R$" do valor */
+.table td.preco {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .table tbody tr {

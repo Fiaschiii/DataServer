@@ -3,7 +3,11 @@ import { requisitar } from './api'
 
 const TAMANHO_PAGINA = 50
 
-const formatarPreco = valor => `R$ ${Number(valor ?? 0).toFixed(2)}`
+// Números no padrão brasileiro: R$ 49.773.461,53 e 10.008
+const formatoMoeda = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
+const formatoInteiro = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 })
+const formatarPreco = valor => formatoMoeda.format(Number(valor ?? 0))
+const formatarQuantidade = valor => formatoInteiro.format(Number(valor ?? 0))
 
 // Identifica uma carga (página + busca + versão) para saber se a tela está atualizada
 const chaveDaCarga = (page, busca, versao) => `${page}|${busca}|${versao}`
@@ -156,7 +160,7 @@ function Painel({ usuario, onSair }) {
         <section className="metrics">
           <div className="metric-card">
             <p className="metric-label">Total de Produtos</p>
-            <p className="metric-value">{temRelatorio ? relatorio.total_produtos : 0}</p>
+            <p className="metric-value">{formatarQuantidade(temRelatorio ? relatorio.total_produtos : 0)}</p>
           </div>
           <div className="metric-card">
             <p className="metric-label">Preço Total</p>
@@ -168,7 +172,12 @@ function Painel({ usuario, onSair }) {
           </div>
           <div className="metric-card">
             <p className="metric-label">Produto Mais Caro</p>
-            <p className="metric-value">{temRelatorio ? relatorio.produto_mais_caro.nome : '—'}</p>
+            <p className="metric-value metric-texto" title={temRelatorio ? relatorio.produto_mais_caro.nome : undefined}>
+              {temRelatorio ? relatorio.produto_mais_caro.nome : '—'}
+            </p>
+            {temRelatorio && (
+              <p className="metric-detalhe">{formatarPreco(relatorio.produto_mais_caro.preco)}</p>
+            )}
           </div>
         </section>
         {erroRelatorio && (
@@ -266,7 +275,7 @@ function Painel({ usuario, onSair }) {
                 <tr key={p.id}>
                   <td>{p.id}</td>
                   <td>{p.nome}</td>
-                  <td>{formatarPreco(p.preco)}</td>
+                  <td className="preco">{formatarPreco(p.preco)}</td>
                   <td><span className="status">Ativo</span></td>
                   <td>
                     <button
