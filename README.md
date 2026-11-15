@@ -39,6 +39,7 @@ cp .env.example .env
 | `DB_HOST`, `DB_USER`, `DB_PASSWORD` | sim | — | Conexão com o Supabase |
 | `JWT_SECRET` | sim | — | Segredo que assina os tokens de login (32+ caracteres aleatórios) |
 | `ADMIN_EMAIL`, `ADMIN_SENHA` | sim | — | Administrador, criado/atualizado na subida do Java |
+| `ADMIN_NOME` | não | vazio | Nome exibido no canto do painel (sem ele, aparece o e-mail) |
 | `JWT_EXPIRACAO_HORAS` | não | `8` | Quanto tempo o login vale |
 | `CORS_ORIGENS` | não | `http://localhost:5173` | Sites que podem chamar a API (separados por vírgula) |
 | `PORT` | não | `8080` | Porta do Java |
@@ -53,7 +54,8 @@ serviços. Com os padrões, Java + Python usam no máximo 8.
 
 ### Banco (uma vez)
 Rode o script [`database/usuarios.sql`](database/usuarios.sql) no SQL Editor do Supabase
-para criar a tabela de usuários. Sem ela o Java não sobe.
+para criar a tabela de usuários (ou acrescentar a coluna `nome`, se ela já existia). Sem isso o
+Java não sobe.
 
 ### Login
 Não existe cadastro aberto. Defina `ADMIN_EMAIL` e `ADMIN_SENHA` (8+ caracteres) no `.env`:
