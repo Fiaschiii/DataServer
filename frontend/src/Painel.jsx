@@ -140,7 +140,6 @@ function Painel({ nomeUsuario, email, onSair }) {
             <span className="logo-text">DataServer</span>
           </div>
           <div className="header-usuario">
-            <span className="badge">v1.0</span>
             {/* Mostra o nome; sem nome cadastrado, o e-mail. O e-mail aparece ao passar o mouse. */}
             <span className="usuario-email" title={email}>{nomeUsuario || email}</span>
             <button className="btn-sair btn-icone" onClick={onSair}>
