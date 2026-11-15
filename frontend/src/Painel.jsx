@@ -1,4 +1,8 @@
 import { useState, useEffect } from 'react'
+import {
+  ArrowLeftIcon, ChevronLeftIcon, ChevronRightIcon, PlusIcon,
+  SearchIcon, SignOutIcon, SyncIcon, TrashIcon, XIcon,
+} from '@primer/octicons-react'
 import { requisitar } from './api'
 
 const TAMANHO_PAGINA = 50
@@ -139,7 +143,10 @@ function Painel({ nomeUsuario, email, onSair }) {
             <span className="badge">v1.0</span>
             {/* Mostra o nome; sem nome cadastrado, o e-mail. O e-mail aparece ao passar o mouse. */}
             <span className="usuario-email" title={email}>{nomeUsuario || email}</span>
-            <button className="btn-sair" onClick={onSair}>Sair</button>
+            <button className="btn-sair btn-icone" onClick={onSair}>
+              <SignOutIcon className="icone anima-direita" />
+              Sair
+            </button>
           </div>
         </div>
       </header>
@@ -148,13 +155,19 @@ function Painel({ nomeUsuario, email, onSair }) {
         {erroCarga && (
           <div className="alerta" role="alert">
             <span>{erroCarga}</span>
-            <button onClick={recarregar}>Tentar novamente</button>
+            <button className="btn-icone" onClick={recarregar}>
+              <SyncIcon className="icone anima-girar" />
+              Tentar novamente
+            </button>
           </div>
         )}
         {aviso && (
           <div className="alerta" role="alert">
             <span>{aviso}</span>
-            <button onClick={() => setAviso(null)}>Fechar</button>
+            <button className="btn-icone" onClick={() => setAviso(null)}>
+              <XIcon className="icone anima-girar-90" />
+              Fechar
+            </button>
           </div>
         )}
 
@@ -208,9 +221,10 @@ function Painel({ nomeUsuario, email, onSair }) {
             <button
               onClick={cadastrarProduto}
               disabled={salvando}
-              className="btn-cadastrar"
+              className="btn-cadastrar btn-icone"
             >
-              {salvando ? 'Salvando...' : '+ Cadastrar'}
+              <PlusIcon className="icone anima-girar-90" />
+              {salvando ? 'Salvando...' : 'Cadastrar'}
             </button>
           </div>
         </section>
@@ -229,12 +243,14 @@ function Painel({ nomeUsuario, email, onSair }) {
             onKeyDown={e => { if (e.key === 'Enter') pesquisar() }}
             className="input-field"
           />
-          <button className="btn-cadastrar" onClick={pesquisar}>
+          <button className="btn-cadastrar btn-icone" onClick={pesquisar}>
+            <SearchIcon className="icone anima-procurar" />
             Pesquisar
           </button>
           {busca && (
-            <button className="btn-voltar" onClick={voltarParaLista}>
-              ← Voltar à lista
+            <button className="btn-voltar btn-icone" onClick={voltarParaLista}>
+              <ArrowLeftIcon className="icone anima-esquerda" />
+              Voltar à lista
             </button>
           )}
         </div>
@@ -280,9 +296,10 @@ function Painel({ nomeUsuario, email, onSair }) {
                   <td><span className="status">Ativo</span></td>
                   <td>
                     <button
-                      className="btn-deletar"
+                      className="btn-deletar btn-icone"
                       onClick={() => deletarProduto(p.id)}
                     >
+                      <TrashIcon className="icone anima-tremer" />
                       Deletar
                     </button>
                   </td>
@@ -292,12 +309,14 @@ function Painel({ nomeUsuario, email, onSair }) {
           </table>
 
           <div className="pagination">
-            <button onClick={() => setPage(p => p - 1)} disabled={page === 0}>
-              ← Anterior
+            <button className="btn-icone" onClick={() => setPage(p => p - 1)} disabled={page === 0}>
+              <ChevronLeftIcon className="icone anima-esquerda" />
+              Anterior
             </button>
             <span>Página {page + 1} de {Math.max(totalPages, 1)}</span>
-            <button onClick={() => setPage(p => p + 1)} disabled={page >= totalPages - 1}>
-              Próxima →
+            <button className="btn-icone" onClick={() => setPage(p => p + 1)} disabled={page >= totalPages - 1}>
+              Próxima
+              <ChevronRightIcon className="icone anima-direita" />
             </button>
           </div>
         </section>

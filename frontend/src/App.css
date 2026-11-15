@@ -494,3 +494,72 @@ body {
   margin-top: 0.5rem;
   padding: 0.7rem;
 }
+
+/* ---------- Ícones dos botões (Octicons) e movimentos ao passar o mouse ---------- */
+.btn-icone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+}
+
+.btn-icone .icone {
+  flex-shrink: 0;
+  transition: transform 0.25s ease;
+}
+
+/* Setas e entrar/sair: o ícone anda na direção que aponta */
+.btn-icone:hover:not(:disabled) .anima-direita {
+  transform: translateX(3px);
+}
+
+.btn-icone:hover:not(:disabled) .anima-esquerda {
+  transform: translateX(-3px);
+}
+
+/* Mais (cadastrar) e X (fechar): giro de um quarto de volta */
+.btn-icone:hover:not(:disabled) .anima-girar-90 {
+  transform: rotate(90deg);
+}
+
+/* Tentar novamente: uma volta completa */
+.btn-icone .anima-girar {
+  transition-duration: 0.5s;
+}
+
+.btn-icone:hover:not(:disabled) .anima-girar {
+  transform: rotate(360deg);
+}
+
+/* Lupa: balança como se estivesse procurando */
+.btn-icone:hover:not(:disabled) .anima-procurar {
+  animation: procurar 0.6s ease;
+}
+
+@keyframes procurar {
+  0%, 100% { transform: rotate(0) scale(1); }
+  25% { transform: rotate(-15deg) scale(1.1); }
+  75% { transform: rotate(15deg) scale(1.1); }
+}
+
+/* Lixeira: treme */
+.btn-icone:hover:not(:disabled) .anima-tremer {
+  animation: tremer 0.4s ease;
+}
+
+@keyframes tremer {
+  0%, 100% { transform: rotate(0); }
+  20% { transform: rotate(-12deg); }
+  40% { transform: rotate(10deg); }
+  60% { transform: rotate(-8deg); }
+  80% { transform: rotate(5deg); }
+}
+
+/* Quem pediu menos movimento no sistema operacional não vê as animações */
+@media (prefers-reduced-motion: reduce) {
+  .btn-icone .icone {
+    transition: none;
+    animation: none !important;
+    transform: none !important;
+  }
+}

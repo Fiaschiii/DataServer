@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { SignInIcon } from '@primer/octicons-react'
 import { requisitar } from './api'
 
 // Tela de login: envia e-mail e senha para POST /auth/login e entrega a sessão ao App
@@ -64,7 +65,8 @@ function Login({ onEntrar, aviso }) {
           className="input-field"
         />
 
-        <button type="submit" disabled={entrando} className="btn-cadastrar login-botao">
+        <button type="submit" disabled={entrando} className="btn-cadastrar btn-icone login-botao">
+          <SignInIcon className="icone anima-direita" />
           {entrando ? 'Entrando...' : 'Entrar'}
         </button>
       </form>
