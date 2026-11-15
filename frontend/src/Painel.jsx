@@ -77,6 +77,13 @@ function Painel({ usuario, onSair }) {
     recarregar()
   }
 
+  // Sai da pesquisa e volta para a lista completa (a mesma de quando se entra no sistema)
+  const voltarParaLista = () => {
+    setInputBusca('')
+    setBusca('')
+    setPage(0)
+  }
+
   const cadastrarProduto = () => {
     if (!nome.trim() || !preco) {
       setAviso('Preencha nome e preço!')
@@ -204,14 +211,28 @@ function Painel({ usuario, onSair }) {
             type="text"
             placeholder="Pesquisar produto pelo nome..."
             value={inputBusca}
-            onChange={e => setInputBusca(e.target.value)}
+            onChange={e => {
+              setInputBusca(e.target.value)
+              // Campo esvaziado durante uma pesquisa: volta sozinho para a lista completa
+              if (busca && e.target.value.trim() === '') voltarParaLista()
+            }}
             onKeyDown={e => { if (e.key === 'Enter') pesquisar() }}
             className="input-field"
           />
           <button className="btn-cadastrar" onClick={pesquisar}>
             Pesquisar
           </button>
+          {busca && (
+            <button className="btn-voltar" onClick={voltarParaLista}>
+              ← Voltar à lista
+            </button>
+          )}
         </div>
+        {busca && (
+          <p className="busca-ativa">
+            Mostrando resultados para <strong>"{busca}"</strong>
+          </p>
+        )}
 
         {/* Tabela de produtos */}
         <section className={`table-section${atualizando ? ' atualizando' : ''}`}>
