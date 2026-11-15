@@ -5,7 +5,8 @@ const API = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
 
 const CHAVE_SESSAO = 'dataserver.sessao'
 
-// Sessão salva: { token, email, expiraEm }. Devolve null se não houver ou se já expirou.
+// Sessão salva: { token, email, nome, expiraEm }. Devolve null se não houver ou se já expirou.
+// nome pode ser null (usuário sem nome) ou ausente (sessão salva antes do campo existir).
 export function lerSessao() {
   try {
     const sessao = JSON.parse(localStorage.getItem(CHAVE_SESSAO))
@@ -16,8 +17,8 @@ export function lerSessao() {
   }
 }
 
-export function salvarSessao({ token, email, expiraEm }) {
-  localStorage.setItem(CHAVE_SESSAO, JSON.stringify({ token, email, expiraEm }))
+export function salvarSessao({ token, email, nome = null, expiraEm }) {
+  localStorage.setItem(CHAVE_SESSAO, JSON.stringify({ token, email, nome, expiraEm }))
 }
 
 export function apagarSessao() {

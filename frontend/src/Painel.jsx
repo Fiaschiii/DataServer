@@ -13,7 +13,7 @@ const formatarQuantidade = valor => formatoInteiro.format(Number(valor ?? 0))
 const chaveDaCarga = (page, busca, versao) => `${page}|${busca}|${versao}`
 
 // Painel principal (só aparece logado): métricas, cadastro, busca e lista de produtos
-function Painel({ usuario, onSair }) {
+function Painel({ nomeUsuario, email, onSair }) {
   const [produtos, setProdutos] = useState([])
   const [totalPages, setTotalPages] = useState(0)
   const [relatorio, setRelatorio] = useState(null)
@@ -137,7 +137,8 @@ function Painel({ usuario, onSair }) {
           </div>
           <div className="header-usuario">
             <span className="badge">v1.0</span>
-            <span className="usuario-email" title="Usuário logado">{usuario}</span>
+            {/* Mostra o nome; sem nome cadastrado, o e-mail. O e-mail aparece ao passar o mouse. */}
+            <span className="usuario-email" title={email}>{nomeUsuario || email}</span>
             <button className="btn-sair" onClick={onSair}>Sair</button>
           </div>
         </div>
